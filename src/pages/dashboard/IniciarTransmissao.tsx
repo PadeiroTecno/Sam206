@@ -46,15 +46,26 @@ interface TransmissionForm {
   inicio_imediato: boolean;
 }
 
+interface TransmissionStatus {
+  is_live: boolean;
+  stream_type: 'playlist' | 'obs' | null;
+  transmission?: {
+    id: number;
+    titulo: string;
+    codigo_playlist?: number;
+  };
+}
+
 const IniciarTransmissao: React.FC = () => {
   const { getToken, user } = useAuth();
-  
+
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [lives, setLives] = useState<Live[]>([]);
   const [sourceUrls, setSourceUrls] = useState<SourceUrls | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
   const [currentPlayerUrl, setCurrentPlayerUrl] = useState('');
+  const [transmissionStatus, setTransmissionStatus] = useState<TransmissionStatus | null>(null);
 
   const [formData, setFormData] = useState<TransmissionForm>({
     tipo: 'youtube',
@@ -159,12 +170,33 @@ const IniciarTransmissao: React.FC = () => {
     }
   };
 
+  const checkTransmissionStatus = async () => {
+    try {
+      const token = await getToken();
+      const response = await fetch('/api/streaming/status', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTransmissionStatus({
+          is_live: data.is_live,
+          stream_type: data.stream_type,
+          transmission: data.transmission
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao verificar status de transmissão:', error);
+    }
+  };
+
   const loadInitialData = async () => {
     try {
       await Promise.all([
         loadPlatforms(),
         loadSourceUrls(),
         loadLives(),
+        checkTransmissionStatus(),
         checkLiveStreams() // Verificar streams OBS também
       ]);
     } catch (error) {

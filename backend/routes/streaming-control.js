@@ -356,10 +356,11 @@ router.post('/start', async (req, res) => {
 
         const playlist = playlists[0];
 
-        // Buscar vídeos da playlist para validar
+        // Buscar vídeos da playlist para validar usando a tabela playlist_videos
         const [videos] = await db.execute(
-            `SELECT COUNT(*) as total FROM videos
-             WHERE playlist_id = ? AND codigo_cliente = ?`,
+            `SELECT COUNT(*) as total FROM playlist_videos pv
+             INNER JOIN videos v ON pv.video_id = v.id
+             WHERE pv.playlist_id = ? AND v.codigo_cliente = ?`,
             [playlist_id, userId]
         );
 
