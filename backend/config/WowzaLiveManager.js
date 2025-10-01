@@ -12,9 +12,9 @@ class WowzaLiveManager {
 
     async initializeFromDatabase(userId) {
         try {
-            // Buscar configurações do servidor Wowza baseado no usuário
+            // Buscar configurações do servidor Wowza incluindo credenciais da API
             const [serverRows] = await db.execute(
-                `SELECT ws.ip, ws.dominio, ws.senha_root, ws.porta_ssh
+                `SELECT ws.ip, ws.dominio, ws.porta_api, ws.usuario_api, ws.senha_api
                  FROM wowza_servers ws
                  JOIN streamings s ON ws.codigo = COALESCE(s.codigo_servidor, 1)
                  WHERE s.codigo_cliente = ? AND ws.status = 'ativo'
@@ -24,13 +24,16 @@ class WowzaLiveManager {
 
             if (serverRows.length === 0) {
                 // Usar servidor padrão
-                this.baseUrl = 'http://51.222.156.223:6980';
-                this.password = 'FK38Ca2SuE6jvJXed97VMn';
+                this.baseUrl = 'http://51.222.156.223:8087';
+                this.username = 'admin';
+                this.password = 'admin';
             } else {
                 const server = serverRows[0];
                 const host = server.dominio || server.ip;
-                this.baseUrl = `http://${host}:6980`;
-                this.password = server.senha_root || 'FK38Ca2SuE6jvJXed97VMn';
+                const port = server.porta_api || 8087;
+                this.baseUrl = `http://${host}:${port}`;
+                this.username = server.usuario_api || 'admin';
+                this.password = server.senha_api || 'admin';
             }
 
             this.initialized = true;

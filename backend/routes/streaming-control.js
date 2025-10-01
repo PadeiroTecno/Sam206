@@ -709,8 +709,9 @@ router.get('/obs-status', async (req, res) => {
         const server = serverRows[0];
         const wowzaHost = server.dominio || server.ip;
         const wowzaPort = server.porta_api || 8087;
+        // Usar credenciais do banco ou valores padrão
         const wowzaUser = server.usuario_api || 'admin';
-        const wowzaPassword = server.senha_api || 'password';
+        const wowzaPassword = server.senha_api || 'admin';
 
         // Verificar streams ativos na aplicação do usuário
         const fetch = require('node-fetch');
@@ -786,12 +787,13 @@ router.get('/source-urls', async (req, res) => {
         if (streamingRows.length > 0) {
             const serverId = streamingRows[0].codigo_servidor;
             const [serverRows] = await db.execute(
-                'SELECT ip, dominio FROM wowza_servers WHERE codigo = ? AND status = "ativo"',
+                'SELECT ip, dominio, porta_api FROM wowza_servers WHERE codigo = ? AND status = "ativo"',
                 [serverId]
             );
 
             if (serverRows.length > 0) {
-                wowzaHost = serverRows[0].dominio || 'stmv1.udicast.com';
+                const server = serverRows[0];
+                wowzaHost = server.dominio || server.ip || 'stmv1.udicast.com';
             }
         }
 
